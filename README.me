@@ -26,7 +26,6 @@ Create a .env file in the root directory and add your Stripe API keys:
 The app will be accessible at [http://localhost:3000].
 ### Step 5: Update the App.js
 Update the app.js file to include the necessary middleware and routes.
-<pre>
   require('dotenv').config();
   const express = require('express');
   const path = require('path');
@@ -47,114 +46,122 @@ Update the app.js file to include the necessary middleware and routes.
   app.use('/checkout', checkoutRouter);
 
   module.exports = app;
-</pre>
+
 
 ### step 6: Update Routes
 Update the routes/index.js file to include the checkout button.
-<pre>
   var express = require('express');
   var router = express.Router();
 
-  &sol;* GET home page. *&sol;
-  router.get(&#39;/&#39;, (req, res) =&gt; {
-    res.render(&#39;index&#39;, { products });
+  /* GET home page. */
+  router.get('/', function(req, res, next) {
+    res.render('index', { title: 'Express' });
   });
-
-  &sol;* GET checkout page. *&sol;
-  router.get(&#39;/success&#39;, (req, res) =&gt; {
-    res.render(&#39;success&#39;);
+  router.get('/success', function(req, res, next) {
+    res.render('success', { title: 'Express' });
   });
-
   module.exports = router;
-</pre>
+
 
 Update the routes/checkout.js file to handle the checkout process.
-<pre>
-// Import required modules and initialize the router
-const express = require('express');
-const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Initialize Stripe with secret key
+  // Import required modules and initialize the router
+  const express = require('express');
+  const router = express.Router();
+  const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Initialize Stripe with secret key
 
-// Define the POST route to create a Stripe Checkout session
-router.post('/', async (req, res) => {
-  try {
-    // Create a Stripe Checkout session with hardcoded product details
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'], // Specify allowed payment methods
-      mode: 'payment', // Specify mode as one-time payment
-      line_items: [ // Define products to be included in the session
-        {
-          price_data: {
-            currency: 'usd', // Set currency to USD
-            product_data: { name: 'Sample Product A' }, // Product name
-            unit_amount: 1500, // Price in cents
+  // Define the POST route to create a Stripe Checkout session
+  router.post('/', async (req, res) => {
+    try {
+      // Create a Stripe Checkout session with hardcoded product details
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'], // Specify allowed payment methods
+        mode: 'payment', // Specify mode as one-time payment
+        line_items: [ // Define products to be included in the session
+          {
+            price_data: {
+              currency: 'usd', // Set currency to USD
+              product_data: { name: 'Sample Product A' }, // Product name
+              unit_amount: 1500, // Price in cents
+            },
+            quantity: 1, // Quantity of the product
           },
-          quantity: 1, // Quantity of the product
-        },
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: { name: 'Sample Product B' },
-            unit_amount: 2500,
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: { name: 'Sample Product B' },
+              unit_amount: 2500,
+            },
+            quantity: 1,
           },
-          quantity: 1,
-        },
-      ],
-      success_url: `${req.headers.origin}/success`, // Redirect URL for successful payment
-      cancel_url: `${req.headers.origin}/`, // Redirect URL for canceled payment
-    });
+        ],
+        success_url: `${req.headers.origin}/success`, // Redirect URL for successful payment
+        cancel_url: `${req.headers.origin}/`, // Redirect URL for canceled payment
+      });
 
-    // Redirect the client to the session URL
-    res.redirect(session.url);
-  } catch (error) {
-    console.error('Error creating session:', error); // Log errors for debugging
-    res.status(500).json({ error: 'Failed to create session' }); // Send error response to client
-  }
-});
+      // Redirect the client to the session URL
+      res.redirect(session.url);
+    } catch (error) {
+      console.error('Error creating session:', error); // Log errors for debugging
+      res.status(500).json({ error: 'Failed to create session' }); // Send error response to client
+    }
+  });
 
-// Export the router for use in the application
-module.exports = router;
-</pre>
+  // Export the router for use in the application
+  module.exports = router;
+
 
 
 ### step 7: Update Views
 Update the views/index.hbs file to include the checkout button.
-   <pre>
-  &lt;!DOCTYPE html&gt;
-  &lt;html&gt;
-  &lt;head&gt;
-    &lt;title&gt;Stripe Demo&lt;/title&gt;
-    &lt;link rel=&quot;stylesheet&quot; href=&quot;/stylesheets/style.css&quot;&gt;
-  &lt;/head&gt;
-  &lt;body&gt;
-    &lt;div class=&quot;container&quot;&gt;
-      &lt;h1&gt;Stripe Demo&lt;/h1&gt;
-      &lt;form action=&quot;/checkout&quot; method=&quot;POST&quot;&gt;
-        &lt;button type=&quot;submit&quot; class=&quot;checkout-button&quot;&gt;Proceed to Checkout&lt;/button&gt;
-      &lt;/form&gt;
-    &lt;/div&gt;
-  &lt;/body&gt;
-  &lt;/html&gt;
-</pre>
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <!-- Title of the page displayed in the browser tab -->
+    <title>Stripe Demo</title>
+    
+    <!-- Link to an external CSS file for styling -->
+    <link rel="stylesheet" href="/stylesheets/style.css">
+  </head>
+  <body>
+    <!-- Main container for the content -->
+    <div class="container">
+      <!-- Heading for the page -->
+      <h1>Stripe Demo</h1>
+      <!-- Form to initiate the checkout process -->
+      <form action="/checkout" method="POST">
+        <!-- Button to submit the form and proceed to checkout -->
+        <button type="submit" class="checkout-button">Proceed to Checkout</button>
+      </form>
+    </div>
+  </body>
+  </html>
+
 
 
 Create a view for successful payment.
-    <pre>
-  &lt;!DOCTYPE html&gt;
-  &lt;html&gt;
-  &lt;head&gt;
-    &lt;title&gt;Payment Successful&lt;/title&gt;
-    &lt;link rel=&quot;stylesheet&quot; href=&quot;/stylesheets/style.css&quot;&gt;
-  &lt;/head&gt;
-  &lt;body&gt;
-    &lt;div class=&quot;success-container&quot;&gt;
-      &lt;h1&gt;Payment Successful!&lt;/h1&gt;
-      &lt;p&gt;Thank you for your purchase.&lt;/p&gt;
-      &lt;a href=&quot;/&quot;&gt;Back to Home&lt;/a&gt;
-    &lt;/div&gt;
-  &lt;/body&gt;
-  &lt;/html&gt;
-</pre>
+ <!DOCTYPE html>
+<html>
+<head>
+  <!-- Title of the page displayed in the browser tab -->
+  <title>Payment Successful</title>
+  
+  <!-- Link to an external CSS file for styling -->
+  <link rel="stylesheet" href="/stylesheets/style.css">
+</head>
+<body>
+  <!-- Main container for the success message -->
+  <div class="success-container">
+    <!-- Heading indicating a successful payment -->
+    <h1>Payment Successful!</h1>
+    
+    <!-- Message thanking the user for their purchase -->
+    <p>Thank you for your purchase.</p>
+    
+    <!-- Link to navigate back to the homepage -->
+    <a href="/">Back to Home</a>
+  </div>
+</body>
+</html>
 
 ### step 8: Make a checkout route 
 Create a new route in routes/checkout.js to handle the checkout session creation.
