@@ -1,0 +1,167 @@
+# Stripe Payment Demo App
+
+This is a stripe in class activity application showcases a basic implementation of a Stripe payment flow using Express and Handlebars (hbs) for the frontend. 
+
+## Requirements
+
+- Node.js (v16 or higher)
+- npm (v7 or higher)
+- Stripe account with API keys
+
+## Setup Instructions
+
+### Step 1: Generate the Express App
+Generate a new Express app using the following command:
+    npx express-generator --view=hbs stripe-demo
+    cd stripe-exercise
+### Step 2: Install Dependencies
+Install the required dependencies using npm: body-parser, dotenv, express, hbs, http-errors, morgan, and stripe.
+    <pre>npm install</pre>
+### Step 3: Set Up Stripe API Keys [https://dashboard.stripe.com/test/apikeys]
+Create a .env file in the root directory and add your Stripe API keys:
+    STRIPE_SECRET_KEY=your_stripe_secret_key
+    STRIPE_PUBLIC_KEY=your_stripe_publishable_key
+### Step 4: Start the Development Server
+    npm start
+The app will be accessible at [http://localhost:3000].
+### Step 5: Update the App.js
+Update the app.js file to include the necessary middleware and routes.
+<pre>
+  require('dotenv').config();
+  const express = require('express');
+  const path = require('path');
+  const indexRouter = require('./routes/index');
+  const checkoutRouter = require('./routes/checkout');
+
+  const app = express();
+
+  // View engine setup
+  app.set('views', path.join(__dirname, 'views'));
+  app.set('view engine', 'hbs');
+
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: false }));
+  app.use(express.static(path.join(__dirname, 'public')));
+
+  app.use('/', indexRouter);
+  app.use('/checkout', checkoutRouter);
+
+  module.exports = app;
+</pre>
+
+### step 6: Update Routes
+Update the routes/index.js file to include the checkout button.
+<pre>
+  var express = require('express');
+  var router = express.Router();
+
+  &sol;* GET home page. *&sol;
+  router.get(&#39;/&#39;, (req, res) =&gt; {
+    res.render(&#39;index&#39;, { products });
+  });
+
+  &sol;* GET checkout page. *&sol;
+  router.get(&#39;/success&#39;, (req, res) =&gt; {
+    res.render(&#39;success&#39;);
+  });
+
+  module.exports = router;
+</pre>
+
+Update the routes/checkout.js file to handle the checkout process.
+<pre>
+// Import required modules and initialize the router
+const express = require('express');
+const router = express.Router();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Initialize Stripe with secret key
+
+// Define the POST route to create a Stripe Checkout session
+router.post('/', async (req, res) => {
+  try {
+    // Create a Stripe Checkout session with hardcoded product details
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'], // Specify allowed payment methods
+      mode: 'payment', // Specify mode as one-time payment
+      line_items: [ // Define products to be included in the session
+        {
+          price_data: {
+            currency: 'usd', // Set currency to USD
+            product_data: { name: 'Sample Product A' }, // Product name
+            unit_amount: 1500, // Price in cents
+          },
+          quantity: 1, // Quantity of the product
+        },
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: { name: 'Sample Product B' },
+            unit_amount: 2500,
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: `${req.headers.origin}/success`, // Redirect URL for successful payment
+      cancel_url: `${req.headers.origin}/`, // Redirect URL for canceled payment
+    });
+
+    // Redirect the client to the session URL
+    res.redirect(session.url);
+  } catch (error) {
+    console.error('Error creating session:', error); // Log errors for debugging
+    res.status(500).json({ error: 'Failed to create session' }); // Send error response to client
+  }
+});
+
+// Export the router for use in the application
+module.exports = router;
+</pre>
+
+
+### step 7: Update Views
+Update the views/index.hbs file to include the checkout button.
+   <pre>
+  &lt;!DOCTYPE html&gt;
+  &lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;Stripe Demo&lt;/title&gt;
+    &lt;link rel=&quot;stylesheet&quot; href=&quot;/stylesheets/style.css&quot;&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div class=&quot;container&quot;&gt;
+      &lt;h1&gt;Stripe Demo&lt;/h1&gt;
+      &lt;form action=&quot;/checkout&quot; method=&quot;POST&quot;&gt;
+        &lt;button type=&quot;submit&quot; class=&quot;checkout-button&quot;&gt;Proceed to Checkout&lt;/button&gt;
+      &lt;/form&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+  &lt;/html&gt;
+</pre>
+
+
+Create a view for successful payment.
+    <pre>
+  &lt;!DOCTYPE html&gt;
+  &lt;html&gt;
+  &lt;head&gt;
+    &lt;title&gt;Payment Successful&lt;/title&gt;
+    &lt;link rel=&quot;stylesheet&quot; href=&quot;/stylesheets/style.css&quot;&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div class=&quot;success-container&quot;&gt;
+      &lt;h1&gt;Payment Successful!&lt;/h1&gt;
+      &lt;p&gt;Thank you for your purchase.&lt;/p&gt;
+      &lt;a href=&quot;/&quot;&gt;Back to Home&lt;/a&gt;
+    &lt;/div&gt;
+  &lt;/body&gt;
+  &lt;/html&gt;
+</pre>
+
+### step 8: Make a checkout route 
+Create a new route in routes/checkout.js to handle the checkout session creation.
+Create a session and describe a line items for the checkout session.
+### step 9: Run the Application
+First close the already running server.
+Then run the following command to start the server
+    ####npm start
+### step 10: Test the Payment Flow
+check your payment on the stripe dashboard: [https://dashboard.stripe.com/test/payments]
